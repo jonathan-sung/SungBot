@@ -1,4 +1,4 @@
-import { Client, Intents } from "discord.js"
+import { Client, Intents, Message } from "discord.js"
 
 export class SungBot {
     private static readonly WORDLE_REGEX = /Wordle\s\d+\s(\d)\/6/;
@@ -6,9 +6,10 @@ export class SungBot {
     private client: Client;
     private wordleMap: PlayerScore[] = [];
 
-    constructor( private readonly token: string) {
-        this.client = new Client( { intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+    constructor(private readonly token: string) {
+        this.client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
         this.client.on('ready', () => this.ready());
+        this.client.on('messageCreate', message => this.messageCreate(message));
     }
 
     connect() {
@@ -16,9 +17,18 @@ export class SungBot {
             .then(result => console.log("Login complete " + result));
     }
 
+    private messageCreate(message: Message<boolean>) {
+        //return if message is sent by bot
+        if (message.author.id == '702494433945321482') return;
+
+        if (SungBot.WORDLE_REGEX.test(message.content)) {
+            this.fetchMessages();
+        }
+    }
+
     private ready() {
         console.log(`Logged in as ${this.client.user?.tag}!`)
-        this.fetchMessages();
+        //this.fetchMessages();
     }
 
     private fetchMessages() {
@@ -35,20 +45,23 @@ export class SungBot {
                     if (currentWordleNum > todaysWordleNum) {
                         this.wordleMap = [];
                         todaysWordleNum = currentWordleNum;
-                        this.wordleMap.push({playerName: value.author.username, score: score, boardScore: SungBot.getBoardScore(value.content), content: value.content, wordleNumber: currentWordleNum});
+                        this.wordleMap.push({ playerName: value.author.username, score: score, boardScore: SungBot.getBoardScore(value.content), content: value.content, wordleNumber: currentWordleNum });
                     } else if (currentWordleNum == todaysWordleNum) {
-                        this.wordleMap.push({playerName: value.author.username, score: score, boardScore: SungBot.getBoardScore(value.content), content: value.content, wordleNumber: currentWordleNum});
+                        this.wordleMap.push({ playerName: value.author.username, score: score, boardScore: SungBot.getBoardScore(value.content), content: value.content, wordleNumber: currentWordleNum });
                     }
                 }
             });
-            this.calculateWinner();
+            if (this.wordleMap.length >= 4) {
+                this.calculateWinner();
+            }
+
         })
-        .catch(console.error);
+            .catch(console.error);
     }
 
     private calculateWinner() {
         var sorted = this.wordleMap.sort(
-            (a,b) => {
+            (a, b) => {
                 // compare score
                 if (a.score < b.score)
                     return -1;
@@ -68,11 +81,9 @@ export class SungBot {
         console.log(winningMessage);
         // @ts-ignore
         this.client.channels.cache.get('992503715820994651')!.send(winningMessage);
-        //console.log(document.documentElement.innerHTML);
-        this.endProgram();
-        //992503715820994651
-        //604218744029446149
-        //console.log(testArr);
+        //this.endProgram();
+        //the call wordle - 992503715820994651
+        //Jonathan's discord server - 604218744029446149
     }
 
     private static getBoardScore(board: string): number {
@@ -107,6 +118,8 @@ export class SungBot {
             process.exit(0);
         });
     }
+
+
 }
 
 interface PlayerScore {

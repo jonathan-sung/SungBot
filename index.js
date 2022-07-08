@@ -1,3 +1,5 @@
+const TOKEN = "token";
+
 const { Client, Intents } = require('discord.js');
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
@@ -117,4 +119,4 @@ client.on("messageCreate", (message) => {
   }
 });
 
-client.login('NzAyNDk0NDMzOTQ1MzIxNDgy.XqA5XA.-EUsdJYmMmgJ3t5XBi_l1BNDEBA');
+client.login(TOKEN);

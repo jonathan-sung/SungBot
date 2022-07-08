@@ -6,7 +6,8 @@ export class SungBot {
     private client: Client;
     private wordleMap: PlayerScore[] = [];
 
-    private channel: TextChannel | null = null;
+    private spoilerChannel: TextChannel | null = null;
+    private winnerChannel: TextChannel | null = null;
 
     constructor(private readonly token: string) {
         this.client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
@@ -30,13 +31,14 @@ export class SungBot {
 
     private ready() {
         console.log(`Logged in as ${this.client.user?.tag}!`)
-        this.channel = (<TextChannel>this.client.channels.cache.get('945629466800029736'));
+        this.spoilerChannel = (<TextChannel>this.client.channels.cache.get('945629466800029736'));
+        this.winnerChannel = (<TextChannel>this.client.channels.cache.get('992503715820994651'));
         this.fetchMessages();
     }
 
     private fetchMessages() {
         let todaysWordleNum = 0;
-        this.channel!.messages.fetch({ limit: 100 }).then(messages => {
+        this.spoilerChannel!.messages.fetch({ limit: 100 }).then(messages => {
             messages.forEach((value: any) => {
                 // console.log(value.content);
                 let match = SungBot.WORDLE_REGEX.exec(value.content);
@@ -81,8 +83,7 @@ export class SungBot {
         // sorted.forEach((x, i) => console.log(x));
         let winningMessage = "Wordle " + sorted[0].wordleNumber + " winner is " + sorted[0].playerName + "! Who scored " + sorted[0].score + "/6 (" + sorted[0].boardScore + "%).";
         console.log(winningMessage);
-        // @ts-ignore
-        this.channel.send(winningMessage)
+        this.winnerChannel!.send(winningMessage)
             .then(resp => console.log("Sent message with response " + resp));
         //this.endProgram();
         //the call wordle - 992503715820994651

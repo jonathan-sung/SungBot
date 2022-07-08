@@ -1,10 +1,12 @@
-import { Client, Intents, Message } from "discord.js"
+import {Client, Intents, Message, TextChannel} from "discord.js"
 
 export class SungBot {
     private static readonly WORDLE_REGEX = /Wordle\s\d+\s([X\d])\/6/;
 
     private client: Client;
     private wordleMap: PlayerScore[] = [];
+
+    private channel: TextChannel | null = null;
 
     constructor(private readonly token: string) {
         this.client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
@@ -28,13 +30,13 @@ export class SungBot {
 
     private ready() {
         console.log(`Logged in as ${this.client.user?.tag}!`)
-        //this.fetchMessages();
+        this.channel = (<TextChannel>this.client.channels.cache.get('945629466800029736'));
+        this.fetchMessages();
     }
 
     private fetchMessages() {
         let todaysWordleNum = 0;
-        // @ts-ignore
-        this.client.channels.cache.get('945629466800029736')!.messages.fetch({ limit: 100 }).then(messages => {
+        this.channel!.messages.fetch({ limit: 100 }).then(messages => {
             messages.forEach((value: any) => {
                 // console.log(value.content);
                 if (SungBot.WORDLE_REGEX.test(value.content)) {
@@ -60,7 +62,7 @@ export class SungBot {
     }
 
     private calculateWinner() {
-        var sorted = this.wordleMap.sort(
+        const sorted = this.wordleMap.sort(
             (a, b) => {
                 // compare score
                 if (a.score < b.score)
@@ -80,7 +82,8 @@ export class SungBot {
         let winningMessage = "Wordle " + sorted[0].wordleNumber + " winner is " + sorted[0].playerName + "! Who scored " + sorted[0].score + "/6 (" + sorted[0].boardScore + "%).";
         console.log(winningMessage);
         // @ts-ignore
-        this.client.channels.cache.get('992503715820994651')!.send(winningMessage);
+        this.channel.send(winningMessage)
+            .then(resp => console.log("Sent message with response " + resp));
         //this.endProgram();
         //the call wordle - 992503715820994651
         //Jonathan's discord server - 604218744029446149

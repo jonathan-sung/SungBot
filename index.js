@@ -3,10 +3,11 @@ const { Client, Intents } = require('discord.js');
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
 
 wordleMap = [];
+WordleRegEx = /Wordle\s[0-9]+\s([0-9])\/6/;
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
-  WordleWinner();
+  //WordleWinner();
 })
 
 async function endProgram() {
@@ -47,7 +48,7 @@ async function WordleWinner() {
   channel = client.channels.cache.get('945629466800029736').messages.fetch({ limit: 100 }).then(messages => {
     messages.forEach((value, key) => {
       //console.log(value.content);
-      WordleRegEx = /Wordle\s[0-9]+\s([0-9])\/6/;
+      
       if (WordleRegEx.test(value.content)) {
         todaysWordle = /\d\d\d/
         scoreRegEx = /(\d)\/6/g;
@@ -85,8 +86,11 @@ async function WordleWinner() {
     sorted.forEach((x, i) => console.log(x));
     winningMessage = "Wordle " + sorted[0][4] + " winner is " + sorted[0][0] + "! Who scored " + sorted[0][1] + "/6 (" + sorted[0][2] + "%).";
     console.log(winningMessage);
-    winner = sorted[0][0]
-    client.channels.cache.get('992503715820994651').send(winningMessage);
+    winner = sorted[0][0];
+    if (sorted.length >= 4) {
+      client.channels.cache.get('992503715820994651').send(winningMessage);
+    }
+    
     //console.log(document.documentElement.innerHTML);
     //endProgram();
     //992503715820994651
@@ -102,6 +106,10 @@ client.on("messageCreate", (message) => {
   //if (message.author.id == 248825525441658880) return;
   //bot id
   if (message.author.id == 702494433945321482) return;
+
+  if (WordleRegEx.test(message.content)) {
+    WordleWinner();
+  }
 
   if (message.content == ('lol')) {
     //cheese();

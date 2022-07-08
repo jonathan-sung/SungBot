@@ -1,7 +1,7 @@
 import {Client, Intents, Message, TextChannel} from "discord.js"
 
 export class SungBot {
-    private static readonly WORDLE_REGEX = /Wordle\s\d+\s([X\d])\/6/;
+    private static readonly WORDLE_REGEX = /Wordle\s(\d+)\s([X\d])\/6/;
 
     private client: Client;
     private wordleMap: PlayerScore[] = [];
@@ -39,11 +39,11 @@ export class SungBot {
         this.channel!.messages.fetch({ limit: 100 }).then(messages => {
             messages.forEach((value: any) => {
                 // console.log(value.content);
-                if (SungBot.WORDLE_REGEX.test(value.content)) {
-                    let todaysWordle = /\d\d\d/
-                    let scoreRegEx = /(\d)\/6/g;
-                    let currentWordleNum = parseInt(todaysWordle.exec(value.content)![0]);
-                    let score = parseInt(scoreRegEx.exec(value.content)![1])
+                let match = SungBot.WORDLE_REGEX.exec(value.content);
+                if (match) {
+                    let currentWordleNum = parseInt(match[1]);
+                    let scoreString = match[2];
+                    let score = scoreString === "X" ? 10 : parseInt(scoreString);
                     if (currentWordleNum > todaysWordleNum) {
                         this.wordleMap = [];
                         todaysWordleNum = currentWordleNum;

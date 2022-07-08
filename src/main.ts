@@ -1,7 +1,7 @@
 import { Client, Intents, Message } from "discord.js"
 
 export class SungBot {
-    private static readonly WORDLE_REGEX = /Wordle\s\d+\s(\d)\/6/;
+    private static readonly WORDLE_REGEX = /Wordle\s\d+\s([X\d])\/6/;
 
     private client: Client;
     private wordleMap: PlayerScore[] = [];

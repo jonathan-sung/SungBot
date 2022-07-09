@@ -37,6 +37,7 @@ export class SungBot {
     }
 
     private fetchMessages() {
+        this.wordleMap = [];
         let todaysWordleNum = 0;
         this.spoilerChannel!.messages.fetch({ limit: 100 }).then(messages => {
             messages.forEach((value: any) => {

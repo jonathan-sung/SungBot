@@ -1,10 +1,11 @@
 import {Client, Intents, Message, TextChannel} from "discord.js"
+import {WinnerTracker} from "./winnerTracker";
 
 export class SungBot {
     private static readonly WORDLE_REGEX = /Wordle\s(\d+)\s([X\d])\/6/;
 
-    private client: Client;
-    private wordleMap: PlayerScore[] = [];
+    private readonly client: Client;
+    private readonly winnerTracker: WinnerTracker;
 
     private spoilerChannel: TextChannel | null = null;
     private winnerChannel: TextChannel | null = null;
@@ -13,6 +14,7 @@ export class SungBot {
         this.client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
         this.client.on('ready', () => this.ready());
         this.client.on('messageCreate', message => this.messageCreate(message));
+        this.winnerTracker = new WinnerTracker( (message) => this.winner(message));
     }
 
     connect() {
@@ -37,7 +39,7 @@ export class SungBot {
     }
 
     private fetchMessages() {
-        this.wordleMap = [];
+        this.winnerTracker.reset();
         let todaysWordleNum = 0;
         this.spoilerChannel!.messages.fetch({ limit: 100 }).then(messages => {
             messages.forEach((value: any) => {
@@ -48,73 +50,23 @@ export class SungBot {
                     let scoreString = match[2];
                     let score = scoreString === "X" ? 10 : parseInt(scoreString);
                     if (currentWordleNum > todaysWordleNum) {
-                        this.wordleMap = [];
+                        this.winnerTracker.reset();
                         todaysWordleNum = currentWordleNum;
-                        this.wordleMap.push({ playerName: value.author.username, score: score, boardScore: SungBot.getBoardScore(value.content), content: value.content, wordleNumber: currentWordleNum });
+                        this.winnerTracker.addScore( value.author.username, score, value.content, currentWordleNum );
                     } else if (currentWordleNum == todaysWordleNum) {
-                        this.wordleMap.push({ playerName: value.author.username, score: score, boardScore: SungBot.getBoardScore(value.content), content: value.content, wordleNumber: currentWordleNum });
+                        this.winnerTracker.addScore( value.author.username, score, value.content, currentWordleNum );
                     }
                 }
             });
-            if (this.wordleMap.length >= 4) {
-                this.calculateWinner();
-            }
 
         })
             .catch(console.error);
     }
 
-    private calculateWinner() {
-        const sorted = this.wordleMap.sort(
-            (a, b) => {
-                // compare score
-                if (a.score < b.score)
-                    return -1;
-                else if (a.score > b.score)
-                    return 1;
-
-                // score were equal, try squares-score
-                if (a.boardScore < b.boardScore)
-                    return 1;
-                else if (a.boardScore > b.boardScore)
-                    return -1;
-                return 0;
-            }
-        );
-        // sorted.forEach((x, i) => console.log(x));
-        let winningMessage = "Wordle " + sorted[0].wordleNumber + " winner is " + sorted[0].playerName + "! Who scored " + sorted[0].score + "/6 (" + sorted[0].boardScore + "%).";
-        console.log(winningMessage);
-        this.winnerChannel!.send(winningMessage)
+    private winner(message: string) {
+        console.log(message);
+        this.winnerChannel!.send(message)
             .then(resp => console.log("Sent message with response " + resp));
-        //this.endProgram();
-        //the call wordle - 992503715820994651
-        //Jonathan's discord server - 604218744029446149
-    }
-
-    private static getBoardScore(board: string): number {
-        //129001 🟩
-        //129000 🟨
-        //11035 ⬛
-        //11036 ⬜
-        let numOfSquares = 0;
-        let yellowSquares = 0;
-        let greenSquares = 0;
-        for (let i = 0; i < board.length; i++) {
-            const currentChar = board.codePointAt(i)
-            //console.log(currentChar, board.charAt(i))
-            if (currentChar == 129001 || currentChar == 129000 || currentChar == 11035 || currentChar == 11036) {
-                numOfSquares++;
-            }
-            if (currentChar == 129001) {
-                greenSquares++;
-            } else if (currentChar == 129000) {
-                yellowSquares++;
-            }
-        }
-        //f(x) = g/s + (y/s) * (1/2)
-        const totalScore = (greenSquares / numOfSquares) + (yellowSquares / (numOfSquares * 2));
-        console.log(totalScore, greenSquares, yellowSquares, numOfSquares);
-        return Math.round(totalScore * 100);
     }
 
     endProgram() {
@@ -123,16 +75,6 @@ export class SungBot {
             process.exit(0);
         });
     }
-
-
-}
-
-interface PlayerScore {
-    playerName: string;
-    score: number;
-    boardScore: number;
-    content: string;
-    wordleNumber: number;
 }
 
 const token = process.argv[2];

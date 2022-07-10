@@ -1,7 +1,7 @@
 export class WinnerTracker {
     private scores: PlayerScore[];
 
-    constructor(private winCallback: (message: string) => void) {
+    constructor(private winCallback: (message: string, day: number) => void) {
         this.scores = [];
     }
 
@@ -35,7 +35,7 @@ export class WinnerTracker {
         );
         // sorted.forEach((x, i) => console.log(x));
         let winningMessage = "Wordle " + sorted[0].wordleNumber + " winner is " + sorted[0].playerName + "! Who scored " + sorted[0].score + "/6 (" + sorted[0].boardScore + "%).";
-        this.winCallback(winningMessage);
+        this.winCallback(winningMessage, sorted[0].wordleNumber);
         //this.endProgram();
         //the call wordle - 992503715820994651
         //Jonathan's discord server - 604218744029446149

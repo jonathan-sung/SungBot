@@ -1,7 +1,10 @@
 import axios from "axios";
+import {Log} from "./log";
 
 export class AnswerRetriever {
     private url: string;
+
+    private readonly log = Log.create();
 
     constructor(private wordleNumber: number) {
         const date = new Date();
@@ -23,7 +26,7 @@ export class AnswerRetriever {
                 }
             })
             .catch(error => {
-                console.log(error);
+                this.log.error(`Request for answer failed ${error}`);
                 reject(error);
             });
         });

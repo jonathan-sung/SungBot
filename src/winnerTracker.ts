@@ -1,5 +1,9 @@
+import {Log} from "./log";
+
 export class WinnerTracker {
     private scores: PlayerScore[];
+
+    private readonly log = Log.create();
 
     constructor(private winCallback: (message: string, day: number) => void) {
         this.scores = [];
@@ -10,7 +14,9 @@ export class WinnerTracker {
     }
 
     addScore(username: string, score: number, content: string, currentWordleNum: number) {
-        this.scores.push({ playerName: username, score: score, boardScore: WinnerTracker.getBoardScore(content), content: content, wordleNumber: currentWordleNum });
+        this.log.info(`Adding score: user: ${username}, score: ${score}, currentWordle: ${currentWordleNum}` );
+        this.log.debug(`${content}`);
+        this.scores.push({ playerName: username, score: score, boardScore: this.getBoardScore(content), content: content, wordleNumber: currentWordleNum });
         if (new Set(this.scores.map((score: PlayerScore) => score.playerName)).size >= 4) {
             this.calculateWinner();
         }
@@ -33,6 +39,7 @@ export class WinnerTracker {
                 return 0;
             }
         );
+        this.log.info(`Calculated winner: ${sorted[0].playerName}`);
         // sorted.forEach((x, i) => console.log(x));
         let winningMessage = "Wordle " + sorted[0].wordleNumber + " winner is " + sorted[0].playerName + "! Who scored " + sorted[0].score + "/6 (" + sorted[0].boardScore + "%).";
         this.winCallback(winningMessage, sorted[0].wordleNumber);
@@ -41,7 +48,7 @@ export class WinnerTracker {
         //Jonathan's discord server - 604218744029446149
     }
 
-    private static getBoardScore(board: string): number {
+    private getBoardScore(board: string): number {
         //129001 🟩
         //129000 🟨
         //11035 ⬛
@@ -63,7 +70,7 @@ export class WinnerTracker {
         }
         //f(x) = g/s + (y/s) * (1/2)
         const totalScore = (greenSquares / numOfSquares) + (yellowSquares / (numOfSquares * 2));
-        console.log(totalScore, greenSquares, yellowSquares, numOfSquares);
+        this.log.info(`Total score = ${totalScore}, green squares = ${greenSquares}, yellow squares = ${yellowSquares}, number of squares = ${numOfSquares}`)
         return Math.round(totalScore * 100);
     }
 }

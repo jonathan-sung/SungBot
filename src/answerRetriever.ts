@@ -13,7 +13,7 @@ export class AnswerRetriever {
     getAnswer(): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             axios.get(this.url).then(res => {
-                const match = new RegExp(/<strong>\s(\w{5})<\/strong>/).exec(res.data);
+                const match = new RegExp(/<strong>\s([A-Z]{5})<\/strong>/).exec(res.data);
                 if (match) {
                     resolve(match[1]);
                 } else {

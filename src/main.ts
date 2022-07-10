@@ -1,5 +1,6 @@
 import {Client, Intents, Message, TextChannel} from "discord.js"
 import {WinnerTracker} from "./winnerTracker";
+import {AnswerRetriever} from "./answerRetriever";
 
 export class SungBot {
     private static readonly WORDLE_REGEX = /Wordle\s(\d+)\s([X\d])\/6/;
@@ -20,6 +21,13 @@ export class SungBot {
     connect() {
         this.client.login(this.token)
             .then(result => console.log("Login complete " + result));
+    }
+
+    getAnswer() {
+        const answerRetriever = new AnswerRetriever(386);
+        answerRetriever.getAnswer().then(answer => {
+            this.winnerChannel!.send(`Todays answer was ${answer}`);
+        });
     }
 
     private messageCreate(message: Message<boolean>) {
@@ -67,6 +75,7 @@ export class SungBot {
         console.log(message);
         this.winnerChannel!.send(message)
             .then(resp => console.log("Sent message with response " + resp));
+        this.getAnswer();
     }
 
     endProgram() {

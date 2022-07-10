@@ -1,5 +1,6 @@
 import {Client, Intents, Message, TextChannel} from "discord.js"
 import {WinnerTracker} from "./winnerTracker";
+import {AnswerRetriever} from "./answerRetriever";
 
 export class SungBot {
     private static readonly WORDLE_REGEX = /Wordle\s(\d+)\s([X\d])\/6/;
@@ -14,12 +15,27 @@ export class SungBot {
         this.client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
         this.client.on('ready', () => this.ready());
         this.client.on('messageCreate', message => this.messageCreate(message));
-        this.winnerTracker = new WinnerTracker( (message) => this.winner(message));
+        this.winnerTracker = new WinnerTracker((message, day) => this.winner(message, day));
     }
 
     connect() {
         this.client.login(this.token)
             .then(result => console.log("Login complete " + result));
+    }
+
+    getAnswer(number: number) {
+        const answerRetriever = new AnswerRetriever(number);
+        answerRetriever.getAnswer().then(answer => {
+            const date = new Date();
+            const dateHours = date.getHours();
+            const answerFunc = () => this.winnerChannel!.send(`Todays answer was ${answer}`);
+            if ( dateHours < 13 ) {
+                setTimeout( answerFunc, (13 - dateHours) * 60 * 60 * 1000 );
+            }
+            else {
+                answerFunc();
+            }
+        });
     }
 
     private messageCreate(message: Message<boolean>) {
@@ -63,10 +79,12 @@ export class SungBot {
             .catch(console.error);
     }
 
-    private winner(message: string) {
-        console.log(message);
+    private winner(message: string, day: number) {
         this.winnerChannel!.send(message)
-            .then(resp => console.log("Sent message with response " + resp));
+            .then(resp => {
+                console.log("Sent message with response " + resp);
+                this.getAnswer(day);
+            });
     }
 
     endProgram() {

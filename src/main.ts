@@ -26,23 +26,26 @@ export class SungBot {
             .then(result => this.log.info(`Login complete: ${result}`));
     }
 
-    getAnswer(number: number) {
+    readyForAnswer(number: number) {
         this.log.debug(`getAnswer(number: ${number})`);
+        const date = new Date();
+        const dateHours = date.getHours();
+        if ( dateHours < 11 ) {
+            const timeout = (11 - dateHours) * 60 * 60 * 1000;
+            this.log.info(`Time is only ${dateHours}, waiting ${timeout}ms to send answer`);
+            setTimeout( () => this.getAnswer(number), timeout );
+        }
+        else {
+            this.log.info(`Sending answer now...`);
+            this.getAnswer(number);
+        }
+    }
+
+    private getAnswer(number: number) {
         const answerRetriever = new AnswerRetriever(number);
         answerRetriever.getAnswer().then(answer => {
             this.log.debug(`Got answer for ${number}: ${answer}`);
-            const date = new Date();
-            const dateHours = date.getHours();
-            const answerFunc = () => this.winnerChannel!.send(`Todays answer was ${answer}`);
-            if ( dateHours < 13 ) {
-                const timeout = (13 - dateHours) * 60 * 60 * 1000;
-                this.log.info(`Time is only ${dateHours}, waiting ${timeout}ms to send answer`);
-                setTimeout( answerFunc, timeout );
-            }
-            else {
-                this.log.info(`Sening answer now...`);
-                answerFunc();
-            }
+            this.winnerChannel!.send(`Todays answer was ${answer}`);
         });
     }
 
@@ -96,7 +99,7 @@ export class SungBot {
         this.winnerChannel!.send(message)
             .then(resp => {
                 this.log.info(`Sent message with response ${resp}`);
-                this.getAnswer(day);
+                this.readyForAnswer(day);
             });
     }
 

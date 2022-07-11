@@ -7,13 +7,15 @@ export class AnswerRetriever {
         const date = new Date();
         const month = AnswerRetriever.getMonthString(date);
         const day = date.getDate();
-        this.url = `https://www.pcgamer.com/wordle-today-${month}-${day}-${wordleNumber}-answer-hint`;
+        //this.url = `https://www.pcgamer.com/wordle-today-${month}-${day}-${wordleNumber}-answer-hint`;
+        this.url = `https://www.tomsguide.com/news/what-is-todays-wordle-answer`;
     }
 
     getAnswer(): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             axios.get(this.url).then(res => {
-                const match = new RegExp(/<strong>\s([A-Z]{5})<\/strong>/).exec(res.data);
+                //const match = new RegExp(/<strong>\s([A-Z]{5})<\/strong>/).exec(res.data);
+                const match = new RegExp(/<strong>([A-Z]{5})<\/strong>/).exec(res.data);
                 if (match) {
                     resolve(match[1]);
                 } else {

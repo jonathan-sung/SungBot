@@ -1,10 +1,12 @@
 import {Client, Intents, Message, TextChannel} from "discord.js"
 import {WinnerTracker} from "./winnerTracker";
 import {AnswerRetriever} from "./answerRetriever";
+import {Log} from "./log";
 
 export class SungBot {
     private static readonly WORDLE_REGEX = /Wordle\s(\d+)\s([X\d])\/6/;
 
+    private readonly log = Log.create();
     private readonly client: Client;
     private readonly winnerTracker: WinnerTracker;
 
@@ -19,45 +21,55 @@ export class SungBot {
     }
 
     connect() {
+        this.log.debug("Connecting to discord...");
         this.client.login(this.token)
-            .then(result => console.log("Login complete " + result));
+            .then(result => this.log.info(`Login complete: ${result}`));
     }
 
     getAnswer(number: number) {
+        this.log.debug(`getAnswer(number: ${number})`);
         const answerRetriever = new AnswerRetriever(number);
         answerRetriever.getAnswer().then(answer => {
+            this.log.debug(`Got answer for ${number}: ${answer}`);
             const date = new Date();
             const dateHours = date.getHours();
             const answerFunc = () => this.winnerChannel!.send(`Todays answer was ${answer}`);
             if ( dateHours < 13 ) {
-                setTimeout( answerFunc, (13 - dateHours) * 60 * 60 * 1000 );
+                const timeout = (13 - dateHours) * 60 * 60 * 1000;
+                this.log.info(`Time is only ${dateHours}, waiting ${timeout}ms to send answer`);
+                setTimeout( answerFunc, timeout );
             }
             else {
+                this.log.info(`Sening answer now...`);
                 answerFunc();
             }
         });
     }
 
-    private messageCreate(message: Message<boolean>) {
+    private messageCreate(message: Message) {
         //return if message is sent by bot
         if (message.author.id == '702494433945321482') return;
 
+        this.log.debug(`Received message`);
         if (SungBot.WORDLE_REGEX.test(message.content)) {
             this.fetchMessages();
         }
     }
 
     private ready() {
-        console.log(`Logged in as ${this.client.user?.tag}!`)
+        this.log.info(`Logged in as ${this.client.user?.tag}!`)
         this.spoilerChannel = (<TextChannel>this.client.channels.cache.get('945629466800029736'));
         this.winnerChannel = (<TextChannel>this.client.channels.cache.get('992503715820994651'));
         this.fetchMessages();
     }
 
     private fetchMessages() {
+        this.log.debug(`Fetching messages... `);
         this.winnerTracker.reset();
         let todaysWordleNum = 0;
-        this.spoilerChannel!.messages.fetch({ limit: 100 }).then(messages => {
+        this.spoilerChannel!.messages.fetch({ limit: 100 }).
+        then(messages => {
+            this.log.debug(`Fetched ${messages.size} messages...`);
             messages.forEach((value: any) => {
                 // console.log(value.content);
                 let match = SungBot.WORDLE_REGEX.exec(value.content);
@@ -80,9 +92,10 @@ export class SungBot {
     }
 
     private winner(message: string, day: number) {
+        this.log.debug(`winner(message: ${message}, day: ${day})`);
         this.winnerChannel!.send(message)
             .then(resp => {
-                console.log("Sent message with response " + resp);
+                this.log.info(`Sent message with response ${resp}`);
                 this.getAnswer(day);
             });
     }

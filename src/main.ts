@@ -66,6 +66,7 @@ export class SungBot {
         this.fetchMessages();
     }
 
+    //awful, awful code...some of the worst code i've ever seen *smh* 
     private fetchMessages() {
         this.log.debug(`Fetching messages... `);
         this.winnerTracker.reset();
